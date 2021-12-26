@@ -1,8 +1,18 @@
 {
+  "type": "module",
   "dependencies": {
-    "lit": "^2.0.0",
     "@lit/reactive-element": "^1.0.0",
+    "lit": "^2.0.0",
     "lit-element": "^3.0.0",
     "lit-html": "^2.0.0"
+  },
+  "devDependencies": {
+    "@web/dev-server": "^0.1.28",
+    "@web/dev-server-esbuild": "^0.2.16",
+    "typescript": "^4.5.4"
+  },
+  "scripts": {
+    "start": "wds",
+    "build:watch": "tsc --watch"
   }
 }

@@ -76,7 +76,7 @@ export function generateRandomMap(region: Region, seats:number, magnitudeSpec: D
     let neediest;
     for (let i = 0; i < districtsToFill.length; i++) {
       const candidate = districtsToFill[i];
-      if (!done.has(candidate.district) {
+      if (!done.has(candidate.district)) {
         neediest = candidate;
         break;
       }

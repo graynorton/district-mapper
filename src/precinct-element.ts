@@ -85,4 +85,4 @@ const districtColors =
     //["e1d0d1","c1dbe0","e7dbcf","c9e1e1","e5d4cc","ebefee","eae2d4","f4f3ef","e3d0cf","b0d0da"]
     //["915c5f","396d77","a77d52","4a8989","9f694e","b5c7c1","b49864","d9d4c5","9a5c57","1f3b43"]
     ["33454c","005f73","0a9396","94d2bd","e9d8a6","ee9b00","ca6702","bb3e03","ae2012","9b2226"]
-    .map(h => `#${h}`
+    .map(h => `#${h}`)
