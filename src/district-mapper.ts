@@ -1,25 +1,33 @@
 import {html, LitElement} from 'lit';
 import {customElement, state} from 'lit/decorators.js';
 
-import { DistrictMap } from './DistrictMap.js';
-import { rectangularRegion, randomlySizedMixedRandD, singletonRorD } from './Region.js';
-import { generateAndScoreRandomMaps, singleWinnerMagnitudeSpec, FRAMagnitudeSpec } from './heuristic-districter.js';
+// import { DistrictMap } from './DistrictMap.js';
+import { DistrictMapper } from './DistrictMapper.js';
+// import { rectangularRegion, randomlySizedMixedRandD, singletonRorD } from './Region.js';
+// import { generateAndScoreRandomMaps, singleWinnerMagnitudeSpec, FRAMagnitudeSpec } from './heuristic-districter.js';
 import './district-map.js';
 
 @customElement('district-mapper')
 export class DistrictMapperElement extends LitElement {
-    @state()
-    maps: ({ score: number, map: DistrictMap })[] = generateAndScoreRandomMaps(
-      rectangularRegion(6, 6, singletonRorD/*randomlySizedMixedRandD*/),
-      4,
-      singleWinnerMagnitudeSpec,
-      //FRAMagnitudeSpec,
-      100
-    )
+    _mapper: DistrictMapper
+
+    // @state()
+    // maps: ({ score: number, map: DistrictMap })[] = generateAndScoreRandomMaps(
+    //   rectangularRegion(6, 6, singletonRorD/*randomlySizedMixedRandD*/),
+    //   4,
+    //   singleWinnerMagnitudeSpec,
+    //   //FRAMagnitudeSpec,
+    //   100
+    // )
     
   
 
     render() {
-        return html`<district-map .map=${this.maps[0].map}></district-map>`;
+        return html`<district-map .map=${this._mapper.map}></district-map>`;
+    }
+
+    constructor() {
+        super();
+        this._mapper = new DistrictMapper(this);
     }
 }

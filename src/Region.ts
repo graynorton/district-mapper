@@ -130,44 +130,44 @@ export const testRegion = new Region([
   new Precinct({ id: 3, x: 0, y: 1 })
 ]);
 
-export function rectangularRegion(x=3, y=3, demographicsGenerator=singletonRorD): Region {
-  const precincts = [];
+// export function rectangularRegion(x=3, y=3, demographicsGenerator=singletonRorD): Region {
+//   const precincts = [];
   
-  for (let i = 0; i < y; i++) {
-    for (let j = 0; j < x; j++) {
-      const { population, voters } = demographicsGenerator();
-      precincts.push(new Precinct({
-        id: (i * x) + (j + 1),
-        x: j,
-        y: i,
-        population,
-        voters
-      }));
-    }
-  }
+//   for (let i = 0; i < y; i++) {
+//     for (let j = 0; j < x; j++) {
+//       const { population, voters } = demographicsGenerator();
+//       precincts.push(new Precinct({
+//         id: (i * x) + (j + 1),
+//         x: j,
+//         y: i,
+//         population,
+//         voters
+//       }));
+//     }
+//   }
   
-  return new Region(precincts);
-}
+//   return new Region(precincts);
+// }
 
-export function randomlySizedMixedRandD(minSize=100, maxSize=1000) {
-  const population = Math.round(minSize + (Math.random() * (maxSize - minSize)));
-  const numDs = Math.round(Math.random() * population);
-  const numRs = population - numDs;
-  return {
-    population,
-    voters: new Map([
-      ['D', numDs],
-      ['R', numRs]
-    ])
-  }
-}
+// export function randomlySizedMixedRandD(minSize=100, maxSize=1000) {
+//   const population = Math.round(minSize + (Math.random() * (maxSize - minSize)));
+//   const numDs = Math.round(Math.random() * population);
+//   const numRs = population - numDs;
+//   return {
+//     population,
+//     voters: new Map([
+//       ['D', numDs],
+//       ['R', numRs]
+//     ])
+//   }
+// }
 
-export function singletonRorD() {
-  const party = Math.random() < 0.5 ? 'D' : 'R';
-  return {
-    population: 1,
-    voters: new Map([
-      [party, 1]
-    ])
-  }
-}
+// export function singletonRorD() {
+//   const party = Math.random() < 0.5 ? 'D' : 'R';
+//   return {
+//     population: 1,
+//     voters: new Map([
+//       [party, 1]
+//     ])
+//   }
+// }
