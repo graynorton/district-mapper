@@ -5,7 +5,7 @@ import { DistrictMap } from './DistrictMap.js';
 
 type DistrictMagnitudeBreakdown = Map<number, number>
 type DistrictMagnitudeSet = number[]
-type DistrictMagnitudeSpec = DistrictMagnitudeSet[]
+export type DistrictMagnitudeSpec = DistrictMagnitudeSet[]
     
 export const FRAMagnitudeSpec = [[5], [5, 3], [5, 3, 4], [5, 3, 4, 2], [5, 3, 4, 2, 1]];
 export const singleWinnerMagnitudeSpec = [[1]];
@@ -112,6 +112,10 @@ export function generateAndScoreRandomMaps(region: Region, seats:number, magnitu
   maps.sort((a, b) => a.score.totalVariance > b.score.totalVariance ? 1 : a.score.totalVariance === b.score.totalVariance ? 0 : -1);
   console.log(maps);
   return maps;
+}
+
+export function generateBestMap(region: Region, seats: number, magnitudeSpec=singleWinnerMagnitudeSpec, numCandidates=100) {
+  return generateAndScoreRandomMaps(region, seats, magnitudeSpec, numCandidates)[0].map;
 }
 
 export function scoreMap(map: DistrictMap) {

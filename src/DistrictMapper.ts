@@ -3,10 +3,12 @@ import { ReactiveController, ReactiveElement } from "lit";
 import { Precinct } from './Precinct.js';
 import { Region } from './Region.js';
 import { DistrictMap } from './DistrictMap.js';
+import { singleWinnerMagnitudeSpec, FRAMagnitudeSpec, generateBestMap, DistrictMagnitudeSpec } from './heuristic-districter.js';
 
 
 type Partisanship = Map<string, number>;
 const evenDRSplit = (): Partisanship => new Map([['D', 0.5], ['R', 0.5]]);
+const DandRPlusTwo = (): Partisanship => new Map([['D', 0.45], ['R', 0.45], ['X', 0.05], ['Y', 0.05]]);
 
 export class DistrictMapper implements ReactiveController {
     map?: DistrictMap
@@ -18,6 +20,7 @@ export class DistrictMapper implements ReactiveController {
     _minPrecinctPopulation: number = 1
     _maxPrecinctPopulation: number = 1
     _partisanship: Partisanship = evenDRSplit()
+    _magnitudeSpec: DistrictMagnitudeSpec = singleWinnerMagnitudeSpec
     _region?: Region
 
     _generateRegion() {
@@ -32,6 +35,10 @@ export class DistrictMapper implements ReactiveController {
         this._host.requestUpdate();
     }
 
+    _autoRedistrict() {
+        this.map = generateBestMap(this._region!, this._seats, this._magnitudeSpec);
+    }
+
     constructor(host: ReactiveElement) {
         this._host = host;
         host.addController(this);
@@ -39,6 +46,7 @@ export class DistrictMapper implements ReactiveController {
 
     hostConnected() {
         this._generateRegion();
+        this._autoRedistrict();
     }
 
 }
@@ -104,12 +112,10 @@ export function rectangularRegion(regionSpec: RegionSpec=defaultRegionSpec): Reg
         }
     }
     if (population < targetPopulation) {
-        console.log('shortfall', targetPopulation - population);
         const totalScraps = scrappers.reduce((prev, {n}) => prev + n, 0);
         const scaleFactor = 1 / totalScraps;
         let proportion = 0;
         scrappers = scrappers.map(({ party, n }) => ({ party, n: (proportion += n / scaleFactor) }));
-        console.log(scrappers);
         const r = Math.random();
         for (let i = 0; i < scrappers.length; i++) {
             const { party, n } = scrappers[i];

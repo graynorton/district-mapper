@@ -59,7 +59,7 @@ class PrecinctElement extends LitElement {
     let segments = [];
     for (let i = 0; i < n; i++) {
       const party = partisanBreakdown[i];
-      const color = party[0] === 'R' ? 'red' : party[0] === 'D' ? 'blue' : '#777';
+      const color = partyColor(party[0]);
       const start = `${Math.round(pct * 100)}%`;
       pct += party[1];
       const end = i === n - 1 ? '100%' : `${Math.round(pct * 100)}%`;
@@ -86,3 +86,15 @@ const districtColors =
     //["915c5f","396d77","a77d52","4a8989","9f694e","b5c7c1","b49864","d9d4c5","9a5c57","1f3b43"]
     ["33454c","005f73","0a9396","94d2bd","e9d8a6","ee9b00","ca6702","bb3e03","ae2012","9b2226"]
     .map(h => `#${h}`)
+
+function partyColor(party: string) {
+  return party === 'D'
+    ? 'blue'
+    : party === 'R'
+    ? 'red'
+    : party === 'X'
+    ? 'green'
+    : party === 'Y'
+    ? 'orange'
+    : '#777';
+}

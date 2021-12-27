@@ -10,7 +10,7 @@ export class DistrictMapElement extends LitElement {
       :host {
        display: grid;
        margin: calc(var(--precinct-size) / 6);
-       --precinct-size: 2.5rem;
+       --precinct-size: 4rem;
       }
   `;
   
