@@ -3,12 +3,12 @@ import { ReactiveController, ReactiveElement } from "lit";
 import { Precinct } from './Precinct.js';
 import { Region } from './Region.js';
 import { DistrictMap } from './DistrictMap.js';
-import { singleWinnerMagnitudeSpec, FRAMagnitudeSpec, generateBestMap, DistrictMagnitudeSpec } from './heuristic-districter.js';
+import { singleWinnerMagnitudeSpec, FRAMagnitudeSpec, generateBestMap, generatePartisanMap, DistrictMagnitudeSpec } from './heuristic-districter.js';
 
 
 type Partisanship = Map<string, number>;
 const evenDRSplit = (): Partisanship => new Map([['D', 0.5], ['R', 0.5]]);
-const DandRPlusTwo = (): Partisanship => new Map([['D', 0.45], ['R', 0.45], ['X', 0.05], ['Y', 0.05]]);
+// const DandRPlusTwo = (): Partisanship => new Map([['D', 9], ['R', 4], ['X', 0], ['Y', 0]]);
 
 export class DistrictMapper implements ReactiveController {
     map?: DistrictMap
@@ -16,12 +16,55 @@ export class DistrictMapper implements ReactiveController {
     _host: ReactiveElement
     _x: number = 10
     _y: number = 10
-    _seats: number = 4
+    _seats: number = 8
     _minPrecinctPopulation: number = 1
     _maxPrecinctPopulation: number = 1
     _partisanship: Partisanship = evenDRSplit()
     _magnitudeSpec: DistrictMagnitudeSpec = singleWinnerMagnitudeSpec
+    _favoredParty: string | null = null
     _region?: Region
+
+    set x(x: number) {
+        this._x = x;
+        this._generateRegion();
+    }
+
+    set y(y: number) {
+        this._y = y;
+        this._generateRegion();
+    }
+
+    set minPrecinctPopulation(min: number) {
+        this._minPrecinctPopulation = min;
+        this._generateRegion();
+    }
+
+    set maxPrecinctPopulation(max: number) {
+        this._maxPrecinctPopulation = max;
+        this._generateRegion();
+    }
+
+    setVoteShare(party: string, share: number) {
+        this._partisanship.set(party, share);
+        this._generateRegion();
+    }
+
+    set seats(seats: number) {
+        this._seats = seats;
+        this._autoRedistrict();
+    }
+
+    set magnitude(option: 'single' | 'multi') {
+        this._magnitudeSpec = option === 'single'
+            ? singleWinnerMagnitudeSpec
+            : FRAMagnitudeSpec;
+        this._autoRedistrict();
+    }
+
+    set favoredParty(party: string | null) {
+        this._favoredParty = party;
+        this._autoRedistrict();
+    }
 
     _generateRegion() {
         this._region = rectangularRegion({
@@ -32,11 +75,17 @@ export class DistrictMapper implements ReactiveController {
             partisanship: this._partisanship
         });
         this.map = new DistrictMap(this._region, this._seats);
-        this._host.requestUpdate();
+        this._autoRedistrict();
+        // this._host.requestUpdate();
     }
 
     _autoRedistrict() {
-        this.map = generateBestMap(this._region!, this._seats, this._magnitudeSpec);
+        this.map = this._favoredParty
+            ? generatePartisanMap(this._favoredParty, this._region!, this._seats, this._magnitudeSpec)
+            : generateBestMap(this._region!, this._seats, this._magnitudeSpec);
+        
+        this._host.requestUpdate();
+        console.log(this.map!.electionResults);
     }
 
     constructor(host: ReactiveElement) {
@@ -46,7 +95,6 @@ export class DistrictMapper implements ReactiveController {
 
     hostConnected() {
         this._generateRegion();
-        this._autoRedistrict();
     }
 
 }

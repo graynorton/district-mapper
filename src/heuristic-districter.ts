@@ -102,7 +102,7 @@ export function generateRandomMap(region: Region, seats:number, magnitudeSpec: D
   return map;
 }
 
-export function generateAndScoreRandomMaps(region: Region, seats:number, magnitudeSpec=singleWinnerMagnitudeSpec, numMaps=100) {
+export function generateAndScoreRandomMaps(region: Region, seats:number, magnitudeSpec=singleWinnerMagnitudeSpec, numMaps=100, scoreMap=scoreMap_Fair) {
   const maps = [];
   for (let i = 0; i < numMaps; i++) {
     const map = generateRandomMap(region, seats, magnitudeSpec);
@@ -115,10 +115,14 @@ export function generateAndScoreRandomMaps(region: Region, seats:number, magnitu
 }
 
 export function generateBestMap(region: Region, seats: number, magnitudeSpec=singleWinnerMagnitudeSpec, numCandidates=100) {
-  return generateAndScoreRandomMaps(region, seats, magnitudeSpec, numCandidates)[0].map;
+  return generateAndScoreRandomMaps(region, seats, magnitudeSpec, numCandidates, scoreMap_Fair)[0].map;
 }
 
-export function scoreMap(map: DistrictMap) {
+export function generatePartisanMap(party: string, region: Region, seats: number, magnitudeSpec=singleWinnerMagnitudeSpec, numCandidates=100) {
+  return generateAndScoreRandomMaps(region, seats, magnitudeSpec, numCandidates, scoreMap_Partisan(party))[0].map;
+}
+
+function scoreMap_Fair(map: DistrictMap) {
   const [regionLevelRepresentation, districtLevelRepresentation, representationByDistrict] = scoreRepresentation(map);
   ///
   const [sizeVariance, sizeVarianceByDistrict] = scoreDistrictSize(map);
@@ -126,6 +130,18 @@ export function scoreMap(map: DistrictMap) {
   const totalVariance = (0.45 * sizeVariance + 0.45 * regionLevelRepresentation + 0.1 * compactnessVariance);
   //console.log('total', totalVariance);
   return {totalVariance, regionLevelRepresentation, sizeVariance, compactnessVariance, sizeVarianceByDistrict, compactnessVarianceByDistrict};
+}
+
+function scoreMap_Partisan(party: string) {
+  return function _scoreMap_Partisan(map: DistrictMap) {
+    const [partisanshipVariance] = scorePartisanship(map, party);
+    ///
+    const [sizeVariance, sizeVarianceByDistrict] = scoreDistrictSize(map);
+    const [compactnessVariance, compactnessVarianceByDistrict] = scoreDistrictCompactness(map);
+    const totalVariance = (0.5 * sizeVariance + 0.5 * partisanshipVariance);
+    //console.log('total', totalVariance);
+    return {totalVariance, partisanshipVariance, sizeVariance, compactnessVariance, sizeVarianceByDistrict, compactnessVarianceByDistrict};
+  }
 }
 
 function scoreDistrictCompactness(map: DistrictMap): [number, number[]] {
@@ -208,7 +224,7 @@ function scoreDistrictSize(map: DistrictMap): [number, number[]] {
 
 function scoreRepresentation(map: DistrictMap): [number, number, number[]]
 {
-  const { votes, seats, byDistrict } = map.electionResults;
+  const { votes, seats } = map.electionResults;
   const totalVotes = votes.get(TOTAL);
   const totalSeats = seats.get(TOTAL);
   let maxAdvantageRatio = -Infinity;
@@ -226,4 +242,24 @@ function scoreRepresentation(map: DistrictMap): [number, number, number[]]
   const variance = 1 - pctRepresented;
   //const variance = pctRepresented;
   return [variance, 0, [0]];
+}
+
+function scorePartisanship(map: DistrictMap, party: string): [number] {
+  const { votes, seats } = map.electionResults;
+  const partyVotes = votes.get(party) || 0;
+  const partySeats = seats.get(party) || 0;
+  let variance;
+  if (partyVotes === 0) {
+    variance = 0;
+  }
+  else {
+    const totalVotes = votes.get(TOTAL)!;
+    const totalSeats = seats.get(TOTAL)!;
+    const pctVotes = partyVotes / totalVotes;
+    const pctSeats = partySeats / totalSeats;
+    const maxAdvantageRatio = 1 / pctVotes;
+    const actualAdvantageRatio = pctSeats / pctVotes;
+    variance = 1 - (actualAdvantageRatio / maxAdvantageRatio);
+  }
+  return [variance];
 }

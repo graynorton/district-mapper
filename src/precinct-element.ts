@@ -92,9 +92,11 @@ function partyColor(party: string) {
     ? 'blue'
     : party === 'R'
     ? 'red'
-    : party === 'X'
+    : party === 'A'
     ? 'green'
-    : party === 'Y'
+    : party === 'B'
     ? 'orange'
+    : party === 'C'
+    ? 'purple'
     : '#777';
 }
