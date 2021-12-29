@@ -36,11 +36,17 @@ export class DistrictMapper implements ReactiveController {
 
     set minPrecinctPopulation(min: number) {
         this._minPrecinctPopulation = min;
+        if (min > this._maxPrecinctPopulation) {
+            this._maxPrecinctPopulation = min;
+        }
         this._generateRegion();
     }
 
     set maxPrecinctPopulation(max: number) {
         this._maxPrecinctPopulation = max;
+        if (max < this._minPrecinctPopulation) {
+            this._minPrecinctPopulation = max;
+        }
         this._generateRegion();
     }
 

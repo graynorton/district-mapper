@@ -41,8 +41,9 @@ class PrecinctElement extends LitElement {
   //   background: radial-gradient(white 40%, transparent 41%), conic-gradient(#FF5722 0% 35%, #FFEB3B 35% 60%, #2196F3 60% 100%);  
       
   render() {
-    const { id, x, y, district, voters } = this.precinct;
-    const sizeRatio = Math.max(0.25, this.precinct.population / this.precinct.region.maxPrecinctPopulation);
+    const maxRadius = Math.sqrt(this.precinct.region!.maxPrecinctPopulation / Math.PI);
+    const thisRadius = Math.sqrt(this.precinct.population! / Math.PI);
+    const sizeRatio = Math.max(thisRadius / maxRadius);
     const sizeExpression = `calc(var(--marker-size) * ${sizeRatio})`;
     const style = {
       background: `conic-gradient(${this._generatePartyPieChartGradient(this.precinct)})`,
