@@ -138,7 +138,7 @@ function scoreMap_Partisan(party: string) {
     ///
     const [sizeVariance, sizeVarianceByDistrict] = scoreDistrictSize(map);
     const [compactnessVariance, compactnessVarianceByDistrict] = scoreDistrictCompactness(map);
-    const totalVariance = (0.5 * sizeVariance + 0.5 * partisanshipVariance);
+    const totalVariance = (0.6 * sizeVariance + 0.4 * partisanshipVariance);
     //console.log('total', totalVariance);
     return {totalVariance, partisanshipVariance, sizeVariance, compactnessVariance, sizeVarianceByDistrict, compactnessVarianceByDistrict};
   }
