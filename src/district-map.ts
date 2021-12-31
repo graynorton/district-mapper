@@ -1,6 +1,7 @@
 import {html, css, LitElement, nothing} from 'lit';
-import {customElement, property} from 'lit/decorators.js';
+import {customElement, property, state} from 'lit/decorators.js';
 import './precinct-element.js';
+import { Precinct } from './Precinct.js';
 import { DistrictMap } from './DistrictMap.js';
 
 
@@ -17,8 +18,12 @@ export class DistrictMapElement extends LitElement {
   @property()
   map?: DistrictMap
 
+  @state()
+  _hoveredPrecinct: Precinct | null = null
+
 
   render() {
+    if (this._hoveredPrecinct) console.log(this._hoveredPrecinct.id);
     return this.map ? html`
         <style>
           :host {
@@ -31,5 +36,10 @@ export class DistrictMapElement extends LitElement {
         `)}
         
     ` : nothing;
+  }
+
+  firstUpdated() {
+    this.addEventListener('precinctenter', e => this._hoveredPrecinct = e.precinct);
+    this.addEventListener('precinctleave', e => this._hoveredPrecinct = null);
   }
 }

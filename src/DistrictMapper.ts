@@ -139,8 +139,8 @@ export class DistrictMapper implements ReactiveController {
 
     _autoRedistrict() {
         this.map = this._favoredParty
-            ? generatePartisanMap(this._favoredParty, this._region!, this._seats, this._magnitudeSpec)
-            : generateBestMap(this._region!, this._seats, this._magnitudeSpec);
+            ? generatePartisanMap(this._favoredParty, this._region!, this._seats, this._magnitudeSpec, 1000)
+            : generateBestMap(this._region!, this._seats, this._magnitudeSpec, 1000);
         
         this._host.requestUpdate();
         console.log(this.map!.electionResults);

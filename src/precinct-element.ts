@@ -28,7 +28,7 @@ class PrecinctElement extends LitElement {
        background: #777;
        border-radius: 50%;
        line-height: var(--marker-size);
-       /*border: var(--detail-size) solid white;*/
+       /* border: var(--detail-size) solid rgba(255, 255, 255, 0.4); */
        font-family: sans-serif;
        font-size: var(--text-size);
        box-shadow: var(--detail-size) var(--detail-size) calc(var(--detail-size) * 2) 0px rgba(12, 12, 12, 0.50);
@@ -79,13 +79,28 @@ class PrecinctElement extends LitElement {
       this.style.background = districtColors[this.precinct.district % districtColors.length];
     }
   }
+
+  firstUpdated() {
+    this.addEventListener('mouseenter', this._dispatchMouseEvent);
+    this.addEventListener('mouseleave', this._dispatchMouseEvent);
+  }
+
+  _dispatchMouseEvent(nativeEvent: MouseEvent) {
+    const t = nativeEvent.type === 'mouseenter' ? 'precinctenter' : 'precinctleave';
+    const e = new Event(t, {composed: true});
+    e.precinct = this.precinct;
+    this.dispatchEvent(e);
+  }
 }
 
 const districtColors =
     //["e1d0d1","c1dbe0","e7dbcf","c9e4d8","e0e6cc","ebefee","eae2d4","e8f1e6","d8d7d7","97d2e4"]
     //["e1d0d1","c1dbe0","e7dbcf","c9e1e1","e5d4cc","ebefee","eae2d4","f4f3ef","e3d0cf","b0d0da"]
     //["915c5f","396d77","a77d52","4a8989","9f694e","b5c7c1","b49864","d9d4c5","9a5c57","1f3b43"]
-    ["33454c","005f73","0a9396","94d2bd","e9d8a6","ee9b00","ca6702","bb3e03","ae2012","9b2226"]
+    // ["33454c","005f73","0a9396","94d2bd","e9d8a6","ee9b00","ca6702","bb3e03","ae2012","9b2226"]
+    // ["1a1a1a","292929","383838","525252","777777","9c9c9c","b9b9b9","c8c8c8","d6d6d6","ebebeb"]
+    // ["1a1a1a","b9b9b9","ebebeb","9c9c9c","292929","d6d6d6","383838","c8c8c8","525252","777777"]
+    ["948e94","adb7c7","a39da2","bcc3cf","b5b1b4","c9cdd6","c2c1c2","d7d9de","f5f5f5","e3e3e3"]
     .map(h => `#${h}`)
 
 function partyColor(party: string) {

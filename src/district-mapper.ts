@@ -22,7 +22,7 @@ export class DistrictMapperElement extends LitElement {
             display: flex;
             justify-content: center;
             align-items: center;
-            background: #DDD;
+            background: #EEE;
             flex-grow: 1;
         }
         district-map {
