@@ -127,7 +127,7 @@ function scoreMap_Fair(map: DistrictMap) {
   ///
   const [sizeVariance, sizeVarianceByDistrict] = scoreDistrictSize(map);
   const [compactnessVariance, compactnessVarianceByDistrict] = scoreDistrictCompactness(map);
-  const totalVariance = (0.5 * sizeVariance + 0.4 * regionLevelRepresentation + 0.1 * compactnessVariance);
+  const totalVariance = (0.8 * sizeVariance + 0.2 * regionLevelRepresentation + 0.0 * compactnessVariance);
   //console.log('total', totalVariance);
   return {totalVariance, regionLevelRepresentation, sizeVariance, compactnessVariance, sizeVarianceByDistrict, compactnessVarianceByDistrict};
 }
@@ -138,7 +138,7 @@ function scoreMap_Partisan(party: string) {
     ///
     const [sizeVariance, sizeVarianceByDistrict] = scoreDistrictSize(map);
     const [compactnessVariance, compactnessVarianceByDistrict] = scoreDistrictCompactness(map);
-    const totalVariance = (0.7 * sizeVariance + 0.3 * partisanshipVariance);
+    const totalVariance = (0.8 * sizeVariance + 0.2 * partisanshipVariance);
     //console.log('total', totalVariance);
     return {totalVariance, partisanshipVariance, sizeVariance, compactnessVariance, sizeVarianceByDistrict, compactnessVarianceByDistrict};
   }

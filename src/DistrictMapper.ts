@@ -16,9 +16,9 @@ export class DistrictMapper implements ReactiveController {
     map?: DistrictMap
 
     _host: ReactiveElement
-    _x: number = 10
-    _y: number = 10
-    _seats: number = 8
+    _x: number = 7
+    _y: number = 5
+    _seats: number = 7
     _minPrecinctPopulation: number = 1
     _maxPrecinctPopulation: number = 1
     _partisanship: Partisanship = evenDRSplit()
