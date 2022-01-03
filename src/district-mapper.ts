@@ -106,9 +106,31 @@ export class DistrictMapperElement extends LitElement {
             width: 20rem;
             flex-shrink: 0;
         }
+        details, fieldset {
+            margin: 0 0.25em 1em 0.25em;
+        }
+        fieldset {
+            margin-top: 1em;
+            text-align: left;
+            padding: 0 0.75em 1em 0.75em;
+            color: #777;
+            font-size: 0.8em;
+            border: 1px solid #AAA;
+        }
+        legend {
+            text-align: right;
+            font-weight: bold;
+            padding: 0 0.5em;
+            text-transform: uppercase;
+        }
+        label {
+            margin-left: 0.4em;
+        }
         input[type=range] {
             display: block;
             width: 100%;
+            margin-top: 1em;
+            margin-bottom: 0.25em;
         }
         .tooltip {
             padding: 0.5em;
