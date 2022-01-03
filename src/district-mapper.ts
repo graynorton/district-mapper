@@ -1,13 +1,85 @@
-import {html, css, LitElement} from 'lit';
-import {customElement, state} from 'lit/decorators.js';
+import {html, css, LitElement, nothing, ReactiveController, ReactiveControllerHost} from 'lit';
+import {customElement, state, query} from 'lit/decorators.js';
 
 import { TOTAL } from './Precinct.js';
 import { DistrictMapper } from './DistrictMapper.js';
 import './district-map.js';
 
+type TooltipperConfig = {
+    delay: number,
+    gap: number,
+    tooltipClass: string
+}
+
+const TooltipperDefaults: TooltipperConfig = {
+    delay: 2000,
+    gap: 4,
+    tooltipClass: 'tooltip'
+}
+
+class Tooltipper implements ReactiveController {
+    tooltip?: HTMLElement
+    _tooltip: HTMLElement
+    _host: ReactiveControllerHost
+    _delay: number
+    _gap: number
+    _activeRangeInput?: HTMLInputElement
+    _timer?: NodeJS.Timeout
+
+    constructor(host: ReactiveControllerHost & HTMLElement, { delay, gap, tooltipClass }=TooltipperDefaults) {
+        this._host = host;
+        host.addController(this);
+        this._delay = delay;
+        this._gap = gap;
+        this._tooltip = document.createElement('div');
+        this._tooltip.style.position = 'fixed';
+        this._tooltip.classList.add(tooltipClass);
+        this._handleEvent = this._handleEvent.bind(this);
+        this._handleTimeout = this._handleTimeout.bind(this);
+        host.addEventListener('mousedown', this._handleEvent);
+        host.addEventListener('input', this._handleEvent);
+    }
+
+    _handleEvent(evt: Event) {
+        console.log('ding!', evt);
+        const target = evt.composedPath()[0] as HTMLInputElement;
+        if (target.localName === 'input' && target.type === 'range') {
+            this._activeRangeInput = target;
+            this._tooltip.textContent = target.value;
+            this.tooltip = this._tooltip;
+            this._host.requestUpdate();
+            clearTimeout(this._timer!);
+            this._timer = setTimeout(this._handleTimeout, this._delay);
+        }
+    }
+
+    _handleTimeout() {
+        this._activeRangeInput = undefined;
+        this.tooltip = undefined;
+        this._host.requestUpdate();
+    }
+
+    hostUpdated() {
+        const { tooltip } = this;
+        if (tooltip) {
+            const input = this._activeRangeInput!;
+            const { min, max, value } = input;
+            const ratio = (Number(value) - Number(min)) / (Number(max) - Number(min));
+            const { top, left, width, height: thumbSize } = input.getBoundingClientRect();
+            const { width: tooltipWidth, height: tooltipHeight } = tooltip.getBoundingClientRect();
+            tooltip.style.top = `${top - this._gap - tooltipHeight}px`;
+            const thumbAdjustmentFactor = 0.5 - ratio;
+            const hOffset = (0.5 * tooltipWidth) - (thumbAdjustmentFactor * thumbSize);
+            tooltip.style.left = `${left + (ratio * width) - hOffset}px`;
+        }
+    }
+
+}
+
 @customElement('district-mapper')
 export class DistrictMapperElement extends LitElement {
     _mapper: DistrictMapper
+    _tooltipper: Tooltipper
 
     static styles = css`
         :host {
@@ -38,6 +110,14 @@ export class DistrictMapperElement extends LitElement {
             display: block;
             width: 100%;
         }
+        .tooltip {
+            padding: 0.5em;
+            background: #555;
+            border-radius: 0.25em;
+            color: white;
+            --detail-size: 0.0625rem;
+            box-shadow: var(--detail-size) var(--detail-size) calc(var(--detail-size) * 2) 0px rgba(12, 12, 12, 0.5);
+        }
     `
 
     render() {
@@ -48,12 +128,12 @@ export class DistrictMapperElement extends LitElement {
             .filter(party => party !== TOTAL)
             .sort()
             .reverse();
-        console.log('whee', this._mapper.map?.electionResults);
         return html`
             <section id="map">
                 <district-map .map=${this._mapper.map}></district-map>
             </section>
-            <section id="controls" @input=${this._updateUI} @change=${this._updateMapper}>
+            <section id="controls" @change=${this._updateMapper}>
+                ${this._tooltipper.tooltip}
                 <details>
                     <summary>Region</summary>
                     <fieldset>
@@ -74,7 +154,7 @@ export class DistrictMapperElement extends LitElement {
                         <legend>Partisanship</legend>
                         ${
                             partyVoteShares.map(([party, share]) => html`
-                                <input id=${party} type="range" min="0" max="1" step="0.01" .value=${share} />
+                                <input id=${party} type="range" min="0" max="10" step="0.1" .value=${share} />
                                 <label for=${party}>${party}</label>
                             `)
                         }
@@ -127,12 +207,9 @@ export class DistrictMapperElement extends LitElement {
         this._mapper.setVoteShare(e.target.id, e.target.value);
     }
 
-    _updateUI(e: Event) {
-        console.log('update UI', e);
-    }
-
     constructor() {
         super();
         this._mapper = new DistrictMapper(this);
+        this._tooltipper = new Tooltipper(this);
     }
 }

@@ -7,7 +7,7 @@ import { singleWinnerMagnitudeSpec, FRAMagnitudeSpec, generateBestMap, generateP
 
 
 type Partisanship = Map<string, number>;
-const evenDRSplit = (): Partisanship => new Map([['D', 0.5], ['R', 0.5], ['A', 0], ['B', 0], ['C', 0]]);
+const evenDRSplit = (): Partisanship => new Map([['D', 5], ['R', 5], ['A', 0], ['B', 0], ['C', 0]]);
 // const DandRPlusTwo = (): Partisanship => new Map([['D', 9], ['R', 4], ['X', 0], ['Y', 0]]);
 
 type Allocation = 'Single-Winner' | 'Multi-Winner Proportional';
