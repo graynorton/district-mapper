@@ -41,7 +41,6 @@ class Tooltipper implements ReactiveController {
     }
 
     _handleEvent(evt: Event) {
-        console.log('ding!', evt);
         const target = evt.composedPath()[0] as HTMLInputElement;
         if (target.localName === 'input' && target.type === 'range') {
             this._activeRangeInput = target;
@@ -86,6 +85,8 @@ export class DistrictMapperElement extends LitElement {
             display: flex;
             flex-direction: row;
             font-family: sans-serif;
+            /* TODO: properly scope variables */
+            --detail-size: 0.25rem;
         }
         :host > * {
             padding: 1rem;
@@ -98,8 +99,6 @@ export class DistrictMapperElement extends LitElement {
             flex-grow: 1;
         }
         district-map {
-            /* TODO: properly scope variables */
-            --detail-size: 0.25rem;
             box-shadow: var(--detail-size) var(--detail-size) calc(var(--detail-size) * 2) 0px rgba(12, 12, 12, 0.5);
         }
         #controls {
@@ -130,14 +129,13 @@ export class DistrictMapperElement extends LitElement {
             display: block;
             width: 100%;
             margin-top: 1em;
-            margin-bottom: 0.25em;
+            margin-bottom: 0.5em;
         }
         .tooltip {
             padding: 0.5em;
             background: #555;
             border-radius: 0.25em;
             color: white;
-            --detail-size: 0.0625rem;
             box-shadow: var(--detail-size) var(--detail-size) calc(var(--detail-size) * 2) 0px rgba(12, 12, 12, 0.5);
         }
     `
@@ -145,11 +143,25 @@ export class DistrictMapperElement extends LitElement {
     render() {
         const { x, y, minPrecinctPopulation, maxPrecinctPopulation, seats, allocation, allocationOptions, favoredParty } = this._mapper;
         const partyVoteShares = this._mapper.getVoteShares();
-        const partiesWithVotes = Array.from(this._mapper.map!.electionResults.votes.entries())
-            .map(entry => entry[0])
-            .filter(party => party !== TOTAL)
-            .sort()
-            .reverse();
+        const results = this._mapper.map!.electionResults;
+        const totalVotes = results.votes.get(TOTAL);
+        const totalSeats = results.seats.get(TOTAL);
+        const votes = Array.from(results.votes.entries())
+            .filter(entry => entry[0] !== TOTAL);
+        console.log('votes', JSON.stringify(votes));
+        const voteShares = votes
+            .slice()
+            .sort((a, b) => a[1] > b[1] ? -1 : a[1] < b[1] ? 1 : 0)
+            .map(entry => [entry[0], entry[1] / totalVotes!]);
+        console.log('shares', JSON.stringify(voteShares));
+        const seatsAwarded = voteShares
+            .map(entry => [entry[0], results.seats.get(entry[0])])
+            .flatMap(entry => new Array(entry[1]).fill(entry[0]));
+        console.log('seats', JSON.stringify(seatsAwarded));
+        const partiesWithVotes = votes
+        .slice()
+        .sort((a, b) => a[0] > b[0] ? -1 : a[0] < b[0] ? 1 : 0)
+        .map(entry => entry[0]);
         return html`
             <section id="map">
                 <district-map .map=${this._mapper.map}></district-map>
@@ -183,7 +195,6 @@ export class DistrictMapperElement extends LitElement {
 
                     </fieldset>
                 </details>
-                
                 <details>
                     <summary>District Map</summary>
                     <fieldset>
@@ -219,7 +230,6 @@ export class DistrictMapperElement extends LitElement {
     }
 
     _updateMapper(e: Event) {
-        console.log('update Mapper', e.target.value);
         const field = e.target.name || e.target.id;
         const value = e.target.value === 'null' ? null : e.target.value;
         this._mapper[field] = value;
