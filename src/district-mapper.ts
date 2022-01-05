@@ -1,9 +1,11 @@
 import {html, css, LitElement, nothing, ReactiveController, ReactiveControllerHost} from 'lit';
 import {customElement, state, query} from 'lit/decorators.js';
+import { styleMap } from 'lit/directives/style-map.js';
 
 import { TOTAL } from './Precinct.js';
 import { DistrictMapper } from './DistrictMapper.js';
 import './district-map.js';
+import { generateProportionalSharesGradient } from './ui-utils.js';
 
 type TooltipperConfig = {
     delay: number,
@@ -82,24 +84,83 @@ export class DistrictMapperElement extends LitElement {
 
     static styles = css`
         :host {
+            --precinct-size: 4rem;
+            --party-color-r: red;
+            --party-color-d: blue;
+            --party-color-a: green;
+            --party-color-b: purple;
+            --party-color-c: yellow;
+
             display: flex;
             flex-direction: row;
             font-family: sans-serif;
+
             /* TODO: properly scope variables */
             --detail-size: 0.25rem;
+            --default-shadow: var(--detail-size) var(--detail-size) calc(var(--detail-size) * 2) 0px rgba(12, 12, 12, 0.5);
         }
-        :host > * {
+        #map, #results, #controls {
             padding: 1rem;
+        }
+        #main {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            background: #EEE;
         }
         #map {
             display: flex;
             justify-content: center;
             align-items: center;
-            background: #EEE;
             flex-grow: 1;
         }
+        #results {
+            color: #888;
+            flex-shrink: 0;
+        }
+        #results-display {
+            max-width: 50em;
+            flex-grow: 1;
+            margin: 0 auto;
+        }
+        #seats {
+            display: flex;
+            justify-content: space-between;
+        }
+        #seats > *:first-child {
+            margin-left: 0;
+        }
+        #seats > *:last-child {
+            margin-right: 0;
+        }
+        #seats > * {
+            width: 2em;
+            height: 1em;
+            flex-grow: 1;
+            margin: 1em 0.2em;
+            box-shadow: var(--default-shadow);
+            /* border: var(--detail-size) solid #666; */
+            border-radius: 1em;
+        }
+        #vote-shares {
+            box-shadow: var(--default-shadow);
+        }
+        #vote-share-labels {
+            margin: 0.5em;
+            position: relative;
+            display: flex;
+            white-space: nowrap;
+        }
+        #vote-share-labels > * {
+            margin: 0 0.25em;
+            flex-grow: 1;
+            font-size: 0.9em;
+        }
+        #results summary {
+            margin-bottom: 0.5em;
+        }
         district-map {
-            box-shadow: var(--detail-size) var(--detail-size) calc(var(--detail-size) * 2) 0px rgba(12, 12, 12, 0.5);
+            box-shadow: var(--default-shadow);
         }
         #controls {
             width: 20rem;
@@ -149,22 +210,51 @@ export class DistrictMapperElement extends LitElement {
         const votes = Array.from(results.votes.entries())
             .filter(entry => entry[0] !== TOTAL);
         console.log('votes', JSON.stringify(votes));
-        const voteShares = votes
+        const voteShares: [string, number][] = votes
             .slice()
             .sort((a, b) => a[1] > b[1] ? -1 : a[1] < b[1] ? 1 : 0)
             .map(entry => [entry[0], entry[1] / totalVotes!]);
-        console.log('shares', JSON.stringify(voteShares));
+        console.log('shares', JSON.stringify(generateProportionalSharesGradient(voteShares)));
         const seatsAwarded = voteShares
             .map(entry => [entry[0], results.seats.get(entry[0])])
             .flatMap(entry => new Array(entry[1]).fill(entry[0]));
         console.log('seats', JSON.stringify(seatsAwarded));
         const partiesWithVotes = votes
-        .slice()
-        .sort((a, b) => a[0] > b[0] ? -1 : a[0] < b[0] ? 1 : 0)
-        .map(entry => entry[0]);
+            .slice()
+            .sort((a, b) => a[0] > b[0] ? -1 : a[0] < b[0] ? 1 : 0)
+            .map(entry => entry[0]);
         return html`
-            <section id="map">
-                <district-map .map=${this._mapper.map}></district-map>
+            <section id="main">
+                <div id="results">
+                    <details>
+                        <summary>Results</summary>
+                        <div id="results-display" style=${styleMap({ maxWidth: `${4 * totalSeats!}rem`})}>
+                            <div id="seats">
+                                ${seatsAwarded.map(s => html`
+                                    <div style=${styleMap({
+                                        background: `var(--party-color-${(s as string).toLowerCase()})`
+                                    })}></div>
+                                `)}
+                            </div>
+                            <div id="vote-shares" style=${styleMap({
+                                height: '1em',
+                                background: `linear-gradient(90deg, ${generateProportionalSharesGradient(voteShares, 'party-color')})`
+                            })}></div>
+                            <div id="vote-share-labels">
+                                ${voteShares.map(p => {
+                                    const pct = `${Math.round(p[1] * 1000) / 10}%`;
+                                    return html`
+                                    <span style=${styleMap({
+                                        flexBasis: pct
+                                    })}>${p[0]}: ${pct}</span>
+                                `})}
+                            </div>
+                        </div>
+                    </details>
+                </div>
+                <section id="map">
+                    <district-map .map=${this._mapper.map}></district-map>
+                </section>
             </section>
             <section id="controls" @change=${this._updateMapper}>
                 ${this._tooltipper.tooltip}
