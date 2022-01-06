@@ -119,7 +119,7 @@ export class DistrictMapperElement extends LitElement {
             flex-shrink: 0;
         }
         #results-display {
-            max-width: 50em;
+            max-width: calc(100vw - 30rem);
             flex-grow: 1;
             margin: 0 auto;
         }
@@ -137,6 +137,7 @@ export class DistrictMapperElement extends LitElement {
             width: 2em;
             height: 1em;
             flex-grow: 1;
+            flex-shrink: 1;
             margin: 1em 0.2em;
             box-shadow: var(--default-shadow);
             /* border: var(--detail-size) solid #666; */
@@ -228,7 +229,7 @@ export class DistrictMapperElement extends LitElement {
                 <div id="results">
                     <details>
                         <summary>Results</summary>
-                        <div id="results-display" style=${styleMap({ maxWidth: `${4 * totalSeats!}rem`})}>
+                        <div id="results-display">
                             <div id="seats">
                                 ${seatsAwarded.map(s => html`
                                     <div style=${styleMap({
