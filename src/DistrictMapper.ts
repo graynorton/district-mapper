@@ -3,7 +3,7 @@ import { ReactiveController, ReactiveElement } from "lit";
 import { Precinct } from './Precinct.js';
 import { Region } from './Region.js';
 import { DistrictMap } from './DistrictMap.js';
-import { singleWinnerMagnitudeSpec, FRAMagnitudeSpec, generateBestMap, generatePartisanMap, DistrictMagnitudeSpec } from './heuristic-districter.js';
+import { singleWinnerMagnitudeSpec, FRAMagnitudeSpec, generateBestMap, generateBestMapWithMutations, generatePartisanMap, DistrictMagnitudeSpec } from './heuristic-districter.js';
 
 
 type Partisanship = Map<string, number>;
@@ -140,7 +140,7 @@ export class DistrictMapper implements ReactiveController {
     _autoRedistrict() {
         this.map = this._favoredParty
             ? generatePartisanMap(this._favoredParty, this._region!, this._seats, this._magnitudeSpec, 1000)
-            : generateBestMap(this._region!, this._seats, this._magnitudeSpec, 1000);
+            : generateBestMap(this._region!, this._seats, this._magnitudeSpec, 100);
         
         this._host.requestUpdate();
         console.log(this.map!.electionResults);

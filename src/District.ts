@@ -51,8 +51,8 @@ export class District {
     return { votes, seats };
   }
   
-  get neighboringPrecincts() {
-    const neighbors = new Set();
+  get neighboringPrecincts(): Set<Precinct> {
+    const neighbors: Set<Precinct> = new Set();
     for (const precinct of this.precincts) {
       const precinctNeighbors = this.region.precinctGraph.get(precinct) || [];
       for (const neighbor of precinctNeighbors) {
@@ -68,5 +68,11 @@ export class District {
     this.region = region;
     this.seats = seats;
     this.precincts = new Set(precincts);
+  }
+
+  clone() {
+    const clone = new District(this.region, this.seats, new Set(this.precincts))
+    clone.id = this.id;
+    return clone;
   }
 }

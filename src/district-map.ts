@@ -30,7 +30,7 @@ export class DistrictMapElement extends LitElement {
             grid-template-columns: repeat(${this.map.region.boundingRect.x + 1}, var(--precinct-size));
           }
         </style>
-        ${this.map.precincts.map(p => html`
+        ${this.map.precinctsWithDistrictAssignments.map(p => html`
           <precinct-element district=${p.district} .precinct=${p}></precinct-element>
         `)}
         

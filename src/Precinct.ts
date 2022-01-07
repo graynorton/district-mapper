@@ -13,9 +13,9 @@ export class Precinct implements PrecinctInterface {
   id: number
   x: number
   y: number
-  population?: number
-  voters?: Map<string, number>
-  partisanBreakdown?: [string, number][]
+  population: number
+  voters: Map<string, number>
+  partisanBreakdown: [string, number][]
   district?: number
   region?: Region
   constructor(config: PrecinctInterface) {
@@ -25,16 +25,14 @@ export class Precinct implements PrecinctInterface {
     this.population = config.population === undefined ? 1 : config.population;
     this.voters = config.voters === undefined ? new Map() : config.voters;
     
-    this.calculatePartisanBreakdown();
+    this.partisanBreakdown = this._calculatePartisanBreakdown();
   }
   
-  calculatePartisanBreakdown() {
-    if (this.voters !== undefined) {
-      const arr = Array.from(this.voters.entries());
-      arr.sort((a, b) => a[0] > b[0] ? 1 : -1);
-      const totalVoters = arr.reduce((total, current) => total = total + current[1], 0);
-      this.partisanBreakdown = arr.map(p => [p[0], p[1] / totalVoters]);
-    }
+  _calculatePartisanBreakdown(): [string, number][] {
+    const arr = Array.from(this.voters.entries());
+    arr.sort((a, b) => a[0] > b[0] ? 1 : -1);
+    const totalVoters = arr.reduce((total, current) => total = total + current[1], 0);
+    return arr.map(p => [p[0], p[1] / totalVoters]);
   }
 }
 

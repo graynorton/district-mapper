@@ -60,46 +60,41 @@ export function generateRandomMap(region: Region, seats:number, magnitudeSpec: D
       map.districts.add(district);
     }
   }
-  const districtsToFill = Array.from(map.districts)
-    .map(district => ({
-      district,
-      population: district.population,
-      idealPopulation: region.population / district.seats
-    }));
   const done: Set<District> = new Set();
   while (precincts.size > 0) {
-    districtsToFill.sort((a, b) => {
-      const aNeeds = a.idealPopulation - a.district.population;
-      const bNeeds = b.idealPopulation - b.district.population;
-      return aNeeds > bNeeds ? -1 : aNeeds === bNeeds ? 0 : 1;
-    });
-    let neediest;
-    for (let i = 0; i < districtsToFill.length; i++) {
-      const candidate = districtsToFill[i];
-      if (!done.has(candidate.district)) {
-        neediest = candidate;
-        break;
-      }
-    }
-    const neighbors = neediest.district.neighboringPrecincts as Set<Precinct>;
-    let availableNeighbor: Precinct;
-    while (neighbors.size && !availableNeighbor) {
+    const neediestDistrict = getNeediestDistrict(map, done);
+    const neighbors = neediestDistrict.neighboringPrecincts as Set<Precinct>;
+    let availableNeighbor: Precinct | null = null;
+    while (neighbors.size && availableNeighbor === null) {
       const idx = Math.floor(Math.random() * neighbors.size);
       const randomNeighbor = Array.from(neighbors)[idx];
       neighbors.delete(randomNeighbor);
-      availableNeighbor = precincts.has(randomNeighbor) && randomNeighbor;       
+      if (precincts.has(randomNeighbor)) availableNeighbor = randomNeighbor;       
     }
     if (availableNeighbor) {
-      neediest.district.precincts.add(availableNeighbor);
-      neediest.population += availableNeighbor.population;
+      neediestDistrict.precincts.add(availableNeighbor);
       precincts.delete(availableNeighbor);
     } 
     else {
-      done.add(neediest.district);
+      done.add(neediestDistrict);
     }
   }
-  map.updateIndex();
+  map.rebuildIndex();
   return map;
+}
+
+function getNeediestDistrict(map: DistrictMap, exclude: Set<District>=new Set()) {
+  const idealPopulationPerSeat = map.region.population / map.seats;
+  const sorted = Array.from(map.districts)
+    .filter(district => !exclude.has(district))
+    .sort((a, b) => {
+      const idealPopulationA = idealPopulationPerSeat * a.seats;
+      const idealPopulationB = idealPopulationPerSeat * b.seats;
+      const shortfallA = idealPopulationA - a.population;
+      const shortfallB = idealPopulationB - b.population;
+      return shortfallA > shortfallB ? -1 : shortfallA < shortfallB ? 1 : 0;
+    });
+  return sorted[0];
 }
 
 export function generateAndScoreRandomMaps(region: Region, seats:number, magnitudeSpec=singleWinnerMagnitudeSpec, numMaps=100, scoreMap=scoreMap_Fair) {
@@ -115,11 +110,103 @@ export function generateAndScoreRandomMaps(region: Region, seats:number, magnitu
 }
 
 export function generateBestMap(region: Region, seats: number, magnitudeSpec=singleWinnerMagnitudeSpec, numCandidates=100) {
-  return generateAndScoreRandomMaps(region, seats, magnitudeSpec, numCandidates, scoreMap_Fair)[0].map;
+  const bestRandomMap = generateAndScoreRandomMaps(region, seats, magnitudeSpec, numCandidates, scoreMap_Fair)[0].map;
+  const improvements = tryRandomMutations(bestRandomMap, scoreMap_Fair);
+  console.log('original', scoreMap_Fair(bestRandomMap).totalVariance);
+  console.log('improvements', Array.from(improvements).map(improvement => scoreMap_Fair(improvement).totalVariance));
+  return bestRandomMap;
 }
 
 export function generatePartisanMap(party: string, region: Region, seats: number, magnitudeSpec=singleWinnerMagnitudeSpec, numCandidates=100) {
   return generateAndScoreRandomMaps(region, seats, magnitudeSpec, numCandidates, scoreMap_Partisan(party))[0].map;
+}
+
+export function generateBestMapWithMutations(region: Region, seats: number, magnitudeSpec=singleWinnerMagnitudeSpec, numCandidates=100) {
+  const bestRandomMap = generateAndScoreRandomMaps(region, seats, magnitudeSpec, numCandidates, scoreMap_Fair)[0].map;
+  const mutatedMap = repeatedlyMutateMap(bestRandomMap, scoreMap_Fair);
+  console.log(scoreMap_Fair(bestRandomMap).totalVariance, scoreMap_Fair(mutatedMap).totalVariance);
+  return mutatedMap;
+}
+
+function randomArrayMember<T>(array: T[]) {
+  return array[Math.floor(Math.random() * array.length)];
+}
+
+function tryRandomMutations(map: DistrictMap, score=scoreMap_Fair, maxMutations=100) {
+  let improvements: Set<DistrictMap> = new Set();
+  for (let i = 0; i < maxMutations; i++) {
+    const improvedMap = randomlyMutateAndRebalanceMap(map, score);
+    if (improvedMap) {
+      improvements.add(improvedMap);
+    }
+  }
+  return improvements;
+}
+
+function randomlyMutateAndRebalanceMap(map: DistrictMap, score=scoreMap_Fair, maxRebalancingSteps=10) {
+  const blockList: Set<Precinct> = new Set();
+  const originalScore = score(map);
+  const mutant = map.clone();
+  const randomDistrict = randomArrayMember(Array.from(map.districts));
+  const randomNeighbor = randomArrayMember(Array.from(randomDistrict.neighboringPrecincts));
+  mutant.assignPrecinct(randomNeighbor, randomDistrict.id!);
+  blockList.add(randomNeighbor);
+  let mutantScore = score(mutant);
+  let rebalancingSteps = 0;
+  while (
+    rebalancingSteps < maxRebalancingSteps
+    && mutantScore.sizeVariance > originalScore.sizeVariance
+    && mutantScore.totalVariance > originalScore.totalVariance
+  ) {
+    const neediestDistrict = getNeediestDistrict(mutant);
+    const neighbors = Array.from(neediestDistrict.neighboringPrecincts);
+    let precintToAnnex: Precinct | null = null;
+    while (!precintToAnnex) {
+      const candidate = neighbors.splice(Math.floor(Math.random() * neighbors.length), 1)[0];
+      if (!blockList.has(candidate)) {
+        precintToAnnex = candidate;
+        blockList.add(precintToAnnex);
+      }
+    }
+    mutant.assignPrecinct(precintToAnnex, neediestDistrict.id!);
+    mutantScore = score(mutant);
+    rebalancingSteps++;
+  }
+  // console.log(mutantScore.totalVariance, originalScore.totalVariance);
+  return mutantScore.totalVariance < originalScore.totalVariance ? mutant : null;
+}
+
+export function repeatedlyMutateMap(map: DistrictMap, scoringFunction=scoreMap_Fair, maxMutations=100) {
+  let bestMap = map;
+  for (let i = 0; i < maxMutations; i++) {
+    const improvedMap = mutateMap(bestMap, scoringFunction);
+    if (improvedMap) {
+      bestMap = improvedMap;
+    }
+    else {
+      break;
+    }
+  }
+  return bestMap;
+}
+
+function mutateMap(map: DistrictMap, scoringFunction=scoreMap_Fair) {
+  let score = scoringFunction(map).totalVariance;
+  let bestMap = map;
+  let bestScore = score;
+  for (const district of map.districts) {
+    for (const neighbor of district.neighboringPrecincts) {
+      const mutant = map.clone();
+      mutant.assignPrecinct(neighbor, district.id!);
+      const mutantScore = scoringFunction(mutant).totalVariance;
+      console.log(mutantScore, bestScore);
+      if (mutantScore < bestScore) {
+        bestScore = mutantScore;
+        bestMap = mutant;
+      }
+    }
+  }
+  return bestMap === map ? null : bestMap;
 }
 
 function scoreMap_Fair(map: DistrictMap) {
