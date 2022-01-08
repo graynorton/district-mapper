@@ -109,38 +109,35 @@ export function generateAndScoreRandomMaps(region: Region, seats:number, magnitu
   return maps;
 }
 
-export function generateBestMap(region: Region, seats: number, magnitudeSpec=singleWinnerMagnitudeSpec, numCandidates=100) {
-  const bestRandomMap = generateAndScoreRandomMaps(region, seats, magnitudeSpec, numCandidates, scoreMap_Fair)[0].map;
-  const improvements = tryRandomMutations(bestRandomMap, scoreMap_Fair);
-  console.log('original', scoreMap_Fair(bestRandomMap).totalVariance);
-  console.log('improvements', Array.from(improvements).map(improvement => scoreMap_Fair(improvement).totalVariance));
-  return bestRandomMap;
+export function generateFairMap(region: Region, seats: number, magnitudeSpec=singleWinnerMagnitudeSpec, numCandidates=100) {
+  return generateBestMap(region, seats, magnitudeSpec, scoreMap_Fair, numCandidates);
 }
 
 export function generatePartisanMap(party: string, region: Region, seats: number, magnitudeSpec=singleWinnerMagnitudeSpec, numCandidates=100) {
-  return generateAndScoreRandomMaps(region, seats, magnitudeSpec, numCandidates, scoreMap_Partisan(party))[0].map;
+  return generateBestMap(region, seats, magnitudeSpec, scoreMap_Partisan(party), numCandidates);
 }
 
-export function generateBestMapWithMutations(region: Region, seats: number, magnitudeSpec=singleWinnerMagnitudeSpec, numCandidates=100) {
-  const bestRandomMap = generateAndScoreRandomMaps(region, seats, magnitudeSpec, numCandidates, scoreMap_Fair)[0].map;
-  const mutatedMap = repeatedlyMutateMap(bestRandomMap, scoreMap_Fair);
-  console.log(scoreMap_Fair(bestRandomMap).totalVariance, scoreMap_Fair(mutatedMap).totalVariance);
-  return mutatedMap;
+function generateBestMap(region: Region, seats: number, magnitudeSpec=singleWinnerMagnitudeSpec, calculateScore=scoreMap_Fair, numCandidates=100) {
+  const bestRandom = generateAndScoreRandomMaps(region, seats, magnitudeSpec, numCandidates, calculateScore)[0];
+  const improvements = Array.from(tryRandomMutations(bestRandom.map, calculateScore));
+  console.log('original', bestRandom.score.totalVariance);
+  console.log('improvements', improvements.map(improvement => improvement.score.totalVariance));
+  return (improvements.length ? improvements[0] : bestRandom).map;
 }
 
 function randomArrayMember<T>(array: T[]) {
   return array[Math.floor(Math.random() * array.length)];
 }
 
-function tryRandomMutations(map: DistrictMap, score=scoreMap_Fair, maxMutations=100) {
-  let improvements: Set<DistrictMap> = new Set();
+function tryRandomMutations(map: DistrictMap, scoreFn=scoreMap_Fair, maxMutations=1000) {
+  const improvements = [];
   for (let i = 0; i < maxMutations; i++) {
-    const improvedMap = randomlyMutateAndRebalanceMap(map, score);
-    if (improvedMap) {
-      improvements.add(improvedMap);
+    const improvement = randomlyMutateAndRebalanceMap(map, scoreFn);
+    if (improvement) {
+      improvements.push(improvement);
     }
   }
-  return improvements;
+  return improvements.sort((a, b) => a.score.totalVariance > b.score.totalVariance ? 1 : b.score.totalVariance > a.score.totalVariance ? -1 : 0);
 }
 
 function randomlyMutateAndRebalanceMap(map: DistrictMap, score=scoreMap_Fair, maxRebalancingSteps=10) {
@@ -149,6 +146,7 @@ function randomlyMutateAndRebalanceMap(map: DistrictMap, score=scoreMap_Fair, ma
   const mutant = map.clone();
   const randomDistrict = randomArrayMember(Array.from(map.districts));
   const randomNeighbor = randomArrayMember(Array.from(randomDistrict.neighboringPrecincts));
+  if (!randomNeighbor) return null;
   mutant.assignPrecinct(randomNeighbor, randomDistrict.id!);
   blockList.add(randomNeighbor);
   let mutantScore = score(mutant);
@@ -161,52 +159,22 @@ function randomlyMutateAndRebalanceMap(map: DistrictMap, score=scoreMap_Fair, ma
     const neediestDistrict = getNeediestDistrict(mutant);
     const neighbors = Array.from(neediestDistrict.neighboringPrecincts);
     let precintToAnnex: Precinct | null = null;
-    while (!precintToAnnex) {
+    while (neighbors.length && !precintToAnnex) {
       const candidate = neighbors.splice(Math.floor(Math.random() * neighbors.length), 1)[0];
       if (!blockList.has(candidate)) {
         precintToAnnex = candidate;
         blockList.add(precintToAnnex);
       }
     }
-    mutant.assignPrecinct(precintToAnnex, neediestDistrict.id!);
-    mutantScore = score(mutant);
+    if (precintToAnnex) {
+      mutant.assignPrecinct(precintToAnnex, neediestDistrict.id!);
+      mutantScore = score(mutant);
+    }
     rebalancingSteps++;
   }
   // console.log(mutantScore.totalVariance, originalScore.totalVariance);
-  return mutantScore.totalVariance < originalScore.totalVariance ? mutant : null;
+  return (mutant.districtsAreContiguous && mutantScore.totalVariance < originalScore.totalVariance) ? { map: mutant, score: mutantScore } : null;
 }
-
-export function repeatedlyMutateMap(map: DistrictMap, scoringFunction=scoreMap_Fair, maxMutations=100) {
-  let bestMap = map;
-  for (let i = 0; i < maxMutations; i++) {
-    const improvedMap = mutateMap(bestMap, scoringFunction);
-    if (improvedMap) {
-      bestMap = improvedMap;
-    }
-    else {
-      break;
-    }
-  }
-  return bestMap;
-}
-
-function mutateMap(map: DistrictMap, scoringFunction=scoreMap_Fair) {
-  let score = scoringFunction(map).totalVariance;
-  let bestMap = map;
-  let bestScore = score;
-  for (const district of map.districts) {
-    for (const neighbor of district.neighboringPrecincts) {
-      const mutant = map.clone();
-      mutant.assignPrecinct(neighbor, district.id!);
-      const mutantScore = scoringFunction(mutant).totalVariance;
-      console.log(mutantScore, bestScore);
-      if (mutantScore < bestScore) {
-        bestScore = mutantScore;
-        bestMap = mutant;
-      }
-    }
-  }
-  return bestMap === map ? null : bestMap;
 }
 
 function scoreMap_Fair(map: DistrictMap) {
@@ -214,7 +182,7 @@ function scoreMap_Fair(map: DistrictMap) {
   ///
   const [sizeVariance, sizeVarianceByDistrict] = scoreDistrictSize(map);
   const [compactnessVariance, compactnessVarianceByDistrict] = scoreDistrictCompactness(map);
-  const totalVariance = (0.8 * sizeVariance + 0.2 * regionLevelRepresentation + 0.0 * compactnessVariance);
+  const totalVariance = (0.7 * sizeVariance + 0.25 * regionLevelRepresentation + 0.05 * compactnessVariance);
   //console.log('total', totalVariance);
   return {totalVariance, regionLevelRepresentation, sizeVariance, compactnessVariance, sizeVarianceByDistrict, compactnessVarianceByDistrict};
 }

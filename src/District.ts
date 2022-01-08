@@ -63,6 +63,23 @@ export class District {
     };
     return neighbors; 
   }
+
+  get isContiguous(): boolean {
+    const tester = new District(this.region);
+    tester.precincts.add(Array.from(this.precincts).shift()!);
+    let contiguous = true;
+    while(contiguous && tester.precincts.size < this.precincts.size) {
+      contiguous = false;
+      const neighbors = tester.neighboringPrecincts;
+      for (const neighbor of neighbors) {
+        if (this.precincts.has(neighbor)) {
+          tester.precincts.add(neighbor);
+          contiguous = true;
+        }
+      }
+    }
+    return contiguous;
+  }
       
   constructor(region: Region, seats=1, precincts?: Set<Precinct> | Precinct[]) {
     this.region = region;

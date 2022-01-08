@@ -210,16 +210,16 @@ export class DistrictMapperElement extends LitElement {
         const totalSeats = results.seats.get(TOTAL);
         const votes = Array.from(results.votes.entries())
             .filter(entry => entry[0] !== TOTAL);
-        console.log('votes', JSON.stringify(votes));
+        // console.log('votes', JSON.stringify(votes));
         const voteShares: [string, number][] = votes
             .slice()
             .sort((a, b) => a[1] > b[1] ? -1 : a[1] < b[1] ? 1 : 0)
             .map(entry => [entry[0], entry[1] / totalVotes!]);
-        console.log('shares', JSON.stringify(generateProportionalSharesGradient(voteShares)));
+        // console.log('shares', JSON.stringify(generateProportionalSharesGradient(voteShares)));
         const seatsAwarded = voteShares
             .map(entry => [entry[0], results.seats.get(entry[0])])
             .flatMap(entry => new Array(entry[1]).fill(entry[0]));
-        console.log('seats', JSON.stringify(seatsAwarded));
+        // console.log('seats', JSON.stringify(seatsAwarded));
         const partiesWithVotes = votes
             .slice()
             .sort((a, b) => a[0] > b[0] ? -1 : a[0] < b[0] ? 1 : 0)

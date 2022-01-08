@@ -44,6 +44,13 @@ export class DistrictMap {
     }
     return { votes, seats, byDistrict };
   }
+
+  get districtsAreContiguous() {
+    for (const district of this.districts) {
+      if (!district.isContiguous) return false;
+    }
+    return true;
+  }
       
   constructor(region: Region, seats=3, districts?: Set<District> | District[]) {
     this.region = region;
