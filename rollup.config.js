@@ -1,4 +1,5 @@
 import resolve from '@rollup/plugin-node-resolve';
+import { terser } from 'rollup-plugin-terser';
 
 export default {
     input: 'build/district-mapper.js',
@@ -6,5 +7,5 @@ export default {
       file: 'build/district-mapper.bundle.js',
       format: 'esm'
     },
-    plugins: [resolve()]
+    plugins: [resolve(), terser()]
   };
