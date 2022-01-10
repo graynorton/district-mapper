@@ -7,12 +7,16 @@
     "lit-html": "^2.0.0"
   },
   "devDependencies": {
+    "@rollup/plugin-node-resolve": "^13.1.3",
     "@web/dev-server": "^0.1.28",
     "@web/dev-server-esbuild": "^0.2.16",
+    "rollup": "^2.63.0",
     "typescript": "^4.5.4"
   },
   "scripts": {
     "start": "wds",
-    "build:watch": "tsc --watch"
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "bundle": "cp index.deploy.html build/index.html && rollup -c"
   }
 }

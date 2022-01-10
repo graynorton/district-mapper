@@ -227,7 +227,7 @@ export class DistrictMapperElement extends LitElement {
         return html`
             <section id="main">
                 <div id="results">
-                    <details>
+                    <details open>
                         <summary>Results</summary>
                         <div id="results-display">
                             <div id="seats">

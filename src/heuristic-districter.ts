@@ -109,17 +109,21 @@ export function generateAndScoreRandomMaps(region: Region, seats:number, magnitu
   return maps;
 }
 
-export function generateFairMap(region: Region, seats: number, magnitudeSpec=singleWinnerMagnitudeSpec, numCandidates=100) {
-  return generateBestMap(region, seats, magnitudeSpec, scoreMap_Fair, numCandidates);
+export function generateFairMap(region: Region, seats: number, magnitudeSpec=singleWinnerMagnitudeSpec, numCandidates=100, maxMutations=100) {
+  return generateBestMap(region, seats, magnitudeSpec, scoreMap_Fair, numCandidates, maxMutations);
 }
 
-export function generatePartisanMap(party: string, region: Region, seats: number, magnitudeSpec=singleWinnerMagnitudeSpec, numCandidates=100) {
-  return generateBestMap(region, seats, magnitudeSpec, scoreMap_Partisan(party), numCandidates);
+export function generatePartisanMap(party: string, region: Region, seats: number, magnitudeSpec=singleWinnerMagnitudeSpec, numCandidates=100, maxMutations=100) {
+  return generateBestMap(region, seats, magnitudeSpec, scoreMap_Partisan(party), numCandidates, maxMutations);
 }
 
-function generateBestMap(region: Region, seats: number, magnitudeSpec=singleWinnerMagnitudeSpec, calculateScore=scoreMap_Fair, numCandidates=100) {
-  const bestRandom = generateAndScoreRandomMaps(region, seats, magnitudeSpec, numCandidates, calculateScore)[0];
-  const improvements = Array.from(tryRandomMutations(bestRandom.map, calculateScore));
+function generateBestMap(region: Region, seats: number, magnitudeSpec=singleWinnerMagnitudeSpec, calculateScore=scoreMap_Fair, numCandidates=100, maxMutations=100) {
+  const randomMaps = generateAndScoreRandomMaps(region, seats, magnitudeSpec, numCandidates, calculateScore);
+  const bestRandom = randomMaps[0];
+  // const improvements = tryRandomMutations(bestRandom.map, calculateScore, maxMutations);
+  const improvements = randomMaps.slice(0, Math.round(numCandidates / 4))
+    .flatMap(map => tryRandomMutations(map.map, calculateScore, maxMutations)
+    .sort((a, b) => a.score.totalVariance > b.score.totalVariance ? 1 : b.score.totalVariance > a.score.totalVariance ? -1 : 0);
   console.log('original', bestRandom.score.totalVariance);
   console.log('improvements', improvements.map(improvement => improvement.score.totalVariance));
   return (improvements.length ? improvements[0] : bestRandom).map;
