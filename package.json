@@ -17,6 +17,6 @@
     "start": "wds",
     "build": "tsc",
     "build:watch": "tsc --watch",
-    "bundle": "cp index.deploy.html build/index.html && rollup -c"
+    "bundle": "tsc && rollup -c && cp index.deploy.html build/index.html"
   }
 }

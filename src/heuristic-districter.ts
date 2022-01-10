@@ -123,7 +123,7 @@ function generateBestMap(region: Region, seats: number, magnitudeSpec=singleWinn
   // const improvements = tryRandomMutations(bestRandom.map, calculateScore, maxMutations);
   const improvements = randomMaps.slice(0, Math.round(numCandidates / 4))
     .flatMap(map => tryRandomMutations(map.map, calculateScore, maxMutations)
-    .sort((a, b) => a.score.totalVariance > b.score.totalVariance ? 1 : b.score.totalVariance > a.score.totalVariance ? -1 : 0);
+    .sort((a, b) => a.score.totalVariance > b.score.totalVariance ? 1 : b.score.totalVariance > a.score.totalVariance ? -1 : 0));
   console.log('original', bestRandom.score.totalVariance);
   console.log('improvements', improvements.map(improvement => improvement.score.totalVariance));
   return (improvements.length ? improvements[0] : bestRandom).map;
@@ -178,7 +178,6 @@ function randomlyMutateAndRebalanceMap(map: DistrictMap, score=scoreMap_Fair, ma
   }
   // console.log(mutantScore.totalVariance, originalScore.totalVariance);
   return (mutant.districtsAreContiguous && mutantScore.totalVariance < originalScore.totalVariance) ? { map: mutant, score: mutantScore } : null;
-}
 }
 
 function scoreMap_Fair(map: DistrictMap) {
