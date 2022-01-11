@@ -143,7 +143,7 @@ export class DistrictMapper implements ReactiveController {
             : generateFairMap(this._region!, this._seats, this._magnitudeSpec);
         
         this._host.requestUpdate();
-        console.log(this.map!.electionResults);
+        // console.log(this.map!.electionResults);
     }
 
     constructor(host: ReactiveElement) {

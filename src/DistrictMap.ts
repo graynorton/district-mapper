@@ -26,9 +26,11 @@ export class DistrictMap {
   get electionResults() {
     const votes: Map<string, number> = new Map();
     const seats: Map<string, number> = new Map();
+    // let newSeats: string[][] = [];
     const byDistrict: Map<number, { votes: Map<string, number>, seats: Map<string, number> }> = new Map();
     for (const district of this.districts) {
       const districtResults = district.electionResults;
+      // newSeats = [...newSeats, ...district.electionResultsNew.seats];
       byDistrict.set(district.id, districtResults);
       const { votes: districtVotes, seats: districtSeats } = districtResults;
       for (const entry of districtVotes.entries()) {
@@ -42,6 +44,7 @@ export class DistrictMap {
         seats.set(party, prev + count);
       }
     }
+    // console.log(newSeats);
     return { votes, seats, byDistrict };
   }
 

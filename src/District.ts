@@ -50,6 +50,45 @@ export class District {
     }
     return { votes, seats };
   }
+
+  get electionResultsNew() {
+    const seats: string[][] = [];
+    const seatsWon: Map<string, number> = new Map();
+    const votes = tabulateResults(this.precincts);
+    const THRESHOLD = 0.02;
+    const threshold = THRESHOLD * votes.get(TOTAL)!;
+    for (let s = this.seats; s > 0; s--) {
+      const qq = Array.from(votes.entries())
+        .filter(e => e[0] !== TOTAL)
+        .map(([party, votesForParty]) => {
+          const alreadyWon = seatsWon.get(party) || 0;
+          return [party, (votesForParty / (alreadyWon + 1)), alreadyWon] as [string, number, number]
+        })
+        .sort((a, b) => a[1] > b[1] ? -1 : a[1] < b[1] ? 1 : 0);
+      if (s === 1) {
+        const winners: [string, number][] = [];
+        let qualifyingQ = qq[0][1];
+        for (const [party, q, alreadyWon] of qq) {
+          if (qualifyingQ - q < threshold) {
+            winners.push([party, alreadyWon]);
+            qualifyingQ = q;
+          }
+          else break;
+        }
+        seats.push(winners.map(w => w[0]));
+        const fractionalSeats = 1 / winners.length;
+        for (const [party, alreadyWon] of winners) {
+          seatsWon.set(party, alreadyWon + fractionalSeats);
+        }
+      }
+      else {
+        const [winningParty, q, alreadyWon] = qq[0];
+        seats.push([winningParty]);
+        seatsWon.set(winningParty, alreadyWon + 1);
+      }
+    }
+    return { votes, seats, seatsWon, threshold };
+  }
   
   get neighboringPrecincts(): Set<Precinct> {
     const neighbors: Set<Precinct> = new Set();

@@ -105,7 +105,7 @@ export function generateAndScoreRandomMaps(region: Region, seats:number, magnitu
     maps.push({ map, score });
   }
   maps.sort((a, b) => a.score.totalVariance > b.score.totalVariance ? 1 : a.score.totalVariance === b.score.totalVariance ? 0 : -1);
-  console.log(maps);
+  // console.log(maps);
   return maps;
 }
 
@@ -124,8 +124,8 @@ function generateBestMap(region: Region, seats: number, magnitudeSpec=singleWinn
   const improvements = randomMaps.slice(0, Math.round(numCandidates / 4))
     .flatMap(map => tryRandomMutations(map.map, calculateScore, maxMutations)
     .sort((a, b) => a.score.totalVariance > b.score.totalVariance ? 1 : b.score.totalVariance > a.score.totalVariance ? -1 : 0));
-  console.log('original', bestRandom.score.totalVariance);
-  console.log('improvements', improvements.map(improvement => improvement.score.totalVariance));
+  // console.log('original', bestRandom.score.totalVariance);
+  // console.log('improvements', improvements.map(improvement => improvement.score.totalVariance));
   return (improvements.length ? improvements[0] : bestRandom).map;
 }
 

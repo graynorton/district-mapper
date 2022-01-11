@@ -91,6 +91,12 @@ export class DistrictMapperElement extends LitElement {
             --party-color-b: purple;
             --party-color-c: yellow;
 
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            min-height: 100vh;
+
             display: flex;
             flex-direction: row;
             font-family: sans-serif;
@@ -111,8 +117,8 @@ export class DistrictMapperElement extends LitElement {
         #map {
             display: flex;
             justify-content: center;
-            align-items: center;
-            flex-grow: 1;
+            /* align-items: center; */
+            /* flex-grow: 1; */
         }
         #results {
             color: #888;
@@ -259,7 +265,7 @@ export class DistrictMapperElement extends LitElement {
             </section>
             <section id="controls" @change=${this._updateMapper}>
                 ${this._tooltipper.tooltip}
-                <details>
+                <details @toggle=${this._manageControlVisibility}>
                     <summary>Region</summary>
                     <fieldset>
                         <legend>Size</legend>
@@ -286,7 +292,7 @@ export class DistrictMapperElement extends LitElement {
 
                     </fieldset>
                 </details>
-                <details>
+                <details @toggle=${this._manageControlVisibility}>
                     <summary>District Map</summary>
                     <fieldset>
                         <legend>Seats</legend>
@@ -328,6 +334,15 @@ export class DistrictMapperElement extends LitElement {
 
     _updateMapperVoteShare(e: Event) {
         this._mapper.setVoteShare(e.target.id, e.target.value);
+    }
+
+    _manageControlVisibility(e: Event) {
+        const controls = this.shadowRoot!.querySelector('#controls');
+        for (const pane of controls!.querySelectorAll('details')) {
+            if (e.target!.open && pane !== e.target) {
+                pane.open = false;
+            }
+        }
     }
 
     constructor() {
